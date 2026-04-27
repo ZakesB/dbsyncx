@@ -1,0 +1,21 @@
+[project]
+name = "dbsyncx"
+version = "1.0.0"
+description = "Database sync tool for developers"
+requires-python = ">=3.8"
+
+dependencies = [
+    "typer[all]",
+    "pyyaml",
+]
+
+[project.scripts]
+dbsyncx = "dbsyncx.main:app"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
