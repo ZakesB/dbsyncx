@@ -2,7 +2,24 @@
 name = "dbsyncx"
 version = "1.0.0"
 description = "Database sync tool for developers"
+readme = "README.md"
 requires-python = ">=3.8"
+
+authors = [
+    { name = "Mzwakhe Besho", email = "beshomzwakhe@icloud.com" }
+]
+
+license = { text = "MIT" }
+
+keywords = ["postgres", "database", "sync", "cli", "backup"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+]
 
 dependencies = [
     "typer[all]",
