@@ -3,6 +3,7 @@ from pathlib import Path
 
 from .config import get_database_url
 from .adapters import get_adapter
+from .adapters.postgres import RestoreConfig
 from .exceptions import DbSyncXError
 from .logging import logger
 from .utils import success
@@ -32,7 +33,7 @@ def pull_db(config, source: str, target: str, dry_run: bool = False):
         adapter.dump(source_url, dump_file)
 
         logger.info("Restoring into target database...")
-        adapter.restore(target_url, dump_file)
+        adapter.restore(target_url, RestoreConfig(input_file=dump_file))
 
         success("Pull complete")
 
@@ -64,7 +65,7 @@ def push_db(config, source: str, target: str):
         adapter.dump(source_url, dump_file)
 
         logger.info("Restoring into target database...")
-        adapter.restore(target_url, dump_file)
+        adapter.restore(target_url, RestoreConfig(input_file=dump_file))
 
         success("Push complete")
 

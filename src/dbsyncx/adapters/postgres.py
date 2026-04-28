@@ -1,8 +1,17 @@
 import subprocess
-from typing import Optional, List
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional
 
 from .base import DatabaseAdapter
 from ..exceptions import AdapterError
+
+
+@dataclass
+class RestoreConfig:
+    input_file: str
+    clean: bool = False
+    jobs: Optional[int] = None
 
 
 class PostgresAdapter(DatabaseAdapter):
@@ -35,12 +44,23 @@ class PostgresAdapter(DatabaseAdapter):
         if result.returncode != 0:
             raise AdapterError(f"pg_dump failed:\n{result.stderr}")
 
-    def restore(
-        self,
-        url: str,
-        input_file: str,
-    ):
-        cmd = ["pg_restore", "-d", url, "--clean", input_file]
+    def restore(self, url: str, config: RestoreConfig):
+        format_type = self._detect_restore_format(config.input_file)
+
+        if format_type == "sql":
+            cmd = ["psql", url, "-f", config.input_file]
+            error_prefix = "psql"
+        else:
+            cmd = ["pg_restore", "-d", url]
+
+            if config.clean:
+                cmd.append("--clean")
+
+            if config.jobs is not None:
+                cmd.extend(["-j", str(config.jobs)])
+
+            cmd.append(config.input_file)
+            error_prefix = "pg_restore"
 
         result = subprocess.run(
             cmd,
@@ -49,7 +69,13 @@ class PostgresAdapter(DatabaseAdapter):
         )
 
         if result.returncode != 0:
-            raise AdapterError(f"pg_restore failed:\n{result.stderr}")
+            raise AdapterError(f"{error_prefix} failed:\n{result.stderr}")
+
+    def _detect_restore_format(self, input_file: str) -> str:
+        if Path(input_file).suffix.lower() == ".sql":
+            return "sql"
+
+        return "archive"
 
     def test_connection(self, url: str) -> bool:
         result = subprocess.run(

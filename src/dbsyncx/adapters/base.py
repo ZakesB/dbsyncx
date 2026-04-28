@@ -24,10 +24,10 @@ class DatabaseAdapter(ABC):
     def restore(
         self,
         url: str,
-        input_file: str,
+        restore_config,
     ):
         """
-        Restore database from file.
+        Restore database from config.
         """
         pass
 
