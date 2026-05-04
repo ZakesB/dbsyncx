@@ -1,6 +1,7 @@
 import yaml
+import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from .exceptions import ConfigError
 
@@ -31,8 +32,41 @@ def init_config() -> None:
     with open(CONFIG_FILE, "w") as f:
         yaml.dump(DEFAULT_CONFIG, f, sort_keys=False)
 
+def resolve_config_path(cli_config: Optional[str] = None) -> Path:
+    """
+    Resolve config path
+    """
 
-def load_config() -> Dict[str, Any]:
+    # 1. CLI flag
+    if cli_config:
+        path = Path(cli_config)
+        if path.exists():
+            return path
+        raise FileNotFoundError(f"Config not found at: {path}")
+
+    # 2. ENV variable
+    env_config = os.getenv("DBSYNCX_CONFIG")
+    if env_config:
+        path = Path(env_config)
+        if path.exists():
+            return path
+        raise FileNotFoundError(f"Config not found at: {path}")
+
+    # 3. Local project config
+    local_path = Path.cwd() / ".dbsyncx" / "config.yml"
+    if local_path.exists():
+        return local_path
+
+    # 4. Home directory fallback
+    home_path = Path.home() / ".dbsyncx" / "config.yml"
+    if home_path.exists():
+        return home_path
+
+    raise FileNotFoundError(
+        "Config not found. Use --config or set DBSYNCX_CONFIG"
+    )
+
+def load_config(config_path: Path) -> Dict[str, Any]:
     """
     Load config from file.
     """
