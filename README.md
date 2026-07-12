@@ -351,13 +351,18 @@ Future:
 * Backup support
 * Safety features
 
-### v1.1.0 (Current)
+### v1.1.0
+
+* Added support for running `dbsyncx` in local, Docker, and crontab environments.
+* Refactored configuration loading to work seamlessly across all supported execution environments.
+
+### v1.2.0 (Current)
 
 * Schema-only sync
 * Table-specific sync
 * Restore from dump files
 
-### v1.2.0
+### v1.3.0
 
 * Cloud dashboard
 * Sync history
