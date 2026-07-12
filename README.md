@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" />
+  <img src="https://img.shields.io/badge/version-1.1.0-blue.svg" />
   <img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" />
   <img src="https://img.shields.io/badge/status-MVP-orange.svg" />
@@ -46,6 +46,9 @@ Then dbsyncx is for you.
 
 * Sync databases (pull / push)
 * One-command database backups
+* Restore from backup dumps
+* Schema-only syncs and backups
+* Table-specific syncs and backups
 * Built-in safety confirmations
 * Dry-run mode (preview actions)
 * Clean YAML configuration
@@ -118,7 +121,7 @@ pip install -e .
 dbsyncx version
 ```
 ```text
-dbsyncx is at version 1.0.0
+dbsyncx is at version 1.1.0
 ```
 
 ---
@@ -186,12 +189,44 @@ dbsyncx init
 dbsyncx pull <source> <target>
 ```
 
+Options:
+
+```bash
+--force, -f       Skip confirmation
+--dry-run         Simulate without executing
+--schema-only     Sync schema objects only
+--table, -t       Limit sync to a table. Repeat for multiple tables
+```
+
+Examples:
+
+```bash
+dbsyncx pull production local --schema-only
+dbsyncx pull production local --table public.users --table audit_log
+```
+
 ---
 
 ### Push database
 
 ```bash
 dbsyncx push <source> <target>
+```
+
+Options:
+
+```bash
+--force, -f       Skip confirmation
+--dry-run         Simulate without executing
+--schema-only     Sync schema objects only
+--table, -t       Limit sync to a table. Repeat for multiple tables
+```
+
+Examples:
+
+```bash
+dbsyncx push local staging --schema-only
+dbsyncx push local staging --table public.users
 ```
 
 ---
@@ -205,9 +240,44 @@ dbsyncx dump <database>
 Options:
 
 ```bash
---output, -o   Custom output file
---dry-run      Simulate without executing
+--output, -o      Custom output file
+--dry-run         Simulate without executing
+--schema-only     Dump schema objects only
+--table, -t       Limit dump to a table. Repeat for multiple tables
 ```
+
+Examples:
+
+```bash
+dbsyncx dump production --schema-only
+dbsyncx dump production --table public.users --output users.dump
+```
+
+---
+
+### Restore database
+
+```bash
+dbsyncx restore <database> <dump-file>
+```
+
+Options:
+
+```bash
+--force, -f       Skip confirmation
+--dry-run         Simulate without executing
+--schema-only     Restore schema objects only
+--table, -t       Limit restore to a table. Repeat for multiple tables
+```
+
+Examples:
+
+```bash
+dbsyncx restore local production.dump
+dbsyncx restore local users.dump --table public.users
+```
+
+Restore uses `pg_restore --clean`, so matching target objects can be dropped and recreated during restore.
 
 ---
 
@@ -275,16 +345,17 @@ Future:
 
 ## Roadmap
 
-### v1.0.0 (Current)
+### v1.0.0
 
 * CLI sync tool
 * Backup support
 * Safety features
 
-### v1.1.0
+### v1.1.0 (Current)
 
 * Schema-only sync
 * Table-specific sync
+* Restore from dump files
 
 ### v1.2.0
 

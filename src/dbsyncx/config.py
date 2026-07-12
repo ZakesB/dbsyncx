@@ -8,6 +8,7 @@ from .exceptions import ConfigError
 
 CONFIG_DIR = Path(".dbsyncx")
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
+CONFIG_FILE_ALT = CONFIG_DIR / "config.yml"
 
 
 DEFAULT_CONFIG = {
@@ -53,14 +54,16 @@ def resolve_config_path(cli_config: Optional[str] = None) -> Path:
         raise FileNotFoundError(f"Config not found at: {path}")
 
     # 3. Local project config
-    local_path = Path.cwd() / ".dbsyncx" / "config.yml"
-    if local_path.exists():
-        return local_path
+    for filename in ("config.yaml", "config.yml"):
+        local_path = Path.cwd() / ".dbsyncx" / filename
+        if local_path.exists():
+            return local_path
 
     # 4. Home directory fallback
-    home_path = Path.home() / ".dbsyncx" / "config.yml"
-    if home_path.exists():
-        return home_path
+    for filename in ("config.yaml", "config.yml"):
+        home_path = Path.home() / ".dbsyncx" / filename
+        if home_path.exists():
+            return home_path
 
     raise FileNotFoundError(
         "Config not found. Use --config or set DBSYNCX_CONFIG"
@@ -70,11 +73,11 @@ def load_config(config_path: Path) -> Dict[str, Any]:
     """
     Load config from file.
     """
-    if not CONFIG_FILE.exists():
-        raise ConfigError("Config not found. Run: dbsyncx init")
+    if not config_path.exists():
+        raise ConfigError(f"Config not found at: {config_path}")
 
     try:
-        with open(CONFIG_FILE) as f:
+        with open(config_path) as f:
             return yaml.safe_load(f)
     except yaml.YAMLError:
         raise ConfigError("Invalid YAML in config file")

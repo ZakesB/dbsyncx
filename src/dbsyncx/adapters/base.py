@@ -25,6 +25,8 @@ class DatabaseAdapter(ABC):
         self,
         url: str,
         input_file: str,
+        schema_only: bool = False,
+        tables: Optional[List[str]] = None,
     ):
         """
         Restore database from file.

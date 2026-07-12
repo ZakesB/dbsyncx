@@ -39,8 +39,17 @@ class PostgresAdapter(DatabaseAdapter):
         self,
         url: str,
         input_file: str,
+        schema_only: bool = False,
+        tables: Optional[List[str]] = None,
     ):
         cmd = ["pg_restore", "-d", url, "--clean", input_file]
+
+        if schema_only:
+            cmd.append("--schema-only")
+
+        if tables:
+            for table in tables:
+                cmd.extend(["-t", table])
 
         result = subprocess.run(
             cmd,
