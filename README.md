@@ -6,10 +6,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue.svg" />
+  <img src="https://img.shields.io/badge/version-1.2.0-blue.svg" />
   <img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" />
-  <img src="https://img.shields.io/badge/status-MVP-orange.svg" />
+  <img src="https://img.shields.io/badge/status-active-blue.svg" />
 </p>
 
 ---
@@ -121,7 +121,7 @@ pip install -e .
 dbsyncx version
 ```
 ```text
-dbsyncx is at version 1.1.0
+dbsyncx is at version 1.2.0
 ```
 
 ---
