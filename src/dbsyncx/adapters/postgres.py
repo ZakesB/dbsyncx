@@ -42,7 +42,7 @@ class PostgresAdapter(DatabaseAdapter):
         schema_only: bool = False,
         tables: Optional[List[str]] = None,
     ):
-        cmd = ["pg_restore", "-d", url, "--clean", input_file]
+        cmd = ["pg_restore", "-d", url, "--clean", "--if-exists", input_file]
 
         if schema_only:
             cmd.append("--schema-only")

@@ -1,6 +1,6 @@
 [project]
 name = "dbsyncx"
-version = "1.2.0"
+version = "1.2.1"
 description = "Database sync tool for developers"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -10,11 +10,6 @@ authors = [
 ]
 
 license = { text = "MIT" }
-
-[project.urls]
-Homepage = "https://github.com/ZakesB/dbsyncx"
-Repository = "https://github.com/ZakesB/dbsyncx"
-"Bug Tracker" = "https://github.com/ZakesB/dbsyncx/issues"
 
 keywords = ["postgres", "database", "sync", "cli", "backup"]
 
@@ -29,9 +24,18 @@ classifiers = [
 dependencies = [
     "typer[all]",
     "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
     "pytest",
     "pytest-cov",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ZakesB/dbsyncx"
+Repository = "https://github.com/ZakesB/dbsyncx"
+"Bug Tracker" = "https://github.com/ZakesB/dbsyncx/issues"
 
 [project.scripts]
 dbsyncx = "dbsyncx.main:app"

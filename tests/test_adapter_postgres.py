@@ -72,6 +72,7 @@ def test_restore_supports_schema_only_and_tables(monkeypatch):
             "-d",
             "postgresql://localhost/target",
             "--clean",
+            "--if-exists",
             "backup.dump",
             "--schema-only",
             "-t",
