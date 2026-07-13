@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.0-blue.svg" />
+  <img src="https://img.shields.io/badge/version-1.2.1-blue.svg" />
   <img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" />
   <img src="https://img.shields.io/badge/status-active-blue.svg" />
@@ -121,7 +121,7 @@ pip install -e .
 dbsyncx version
 ```
 ```text
-dbsyncx is at version 1.2.0
+dbsyncx is at version 1.2.1
 ```
 
 ---
@@ -277,7 +277,7 @@ dbsyncx restore local production.dump
 dbsyncx restore local users.dump --table public.users
 ```
 
-Restore uses `pg_restore --clean`, so matching target objects can be dropped and recreated during restore.
+Restore uses `pg_restore --clean --if-exists`, so matching target objects can be dropped and recreated during restore without failing on empty targets.
 
 ---
 
@@ -356,7 +356,7 @@ Future:
 * Added support for running `dbsyncx` in local, Docker, and crontab environments.
 * Refactored configuration loading to work seamlessly across all supported execution environments.
 
-### v1.2.0 (Current)
+### v1.2.1 (Current)
 
 * Schema-only sync
 * Table-specific sync
