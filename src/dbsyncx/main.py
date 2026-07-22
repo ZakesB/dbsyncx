@@ -1,3 +1,4 @@
+from dbsyncx.backup import create_backup_manager
 import typer
 from typing import Optional, List
 from .config import (
@@ -8,11 +9,17 @@ from .config import (
 )
 from .sync import pull_db, push_db, dump_db, restore_db
 from .exceptions import DbSyncXError
-from .utils import success, error
+from .utils import format_bytes, require_config, success, error, info
 from .adapters import get_adapter
 from . import __version__
 
 app = typer.Typer(help="dbsyncx - Database sync tool")
+backup_app = typer.Typer(help="Manage backups")
+
+app.add_typer(
+    backup_app,
+    name="backup",
+)
 
 
 def _validate_tables(tables: Optional[List[str]]) -> Optional[List[str]]:
@@ -90,10 +97,7 @@ def pull(
     table: Optional[List[str]] = typer.Option(None, "--table", "-t", help="Limit sync to a table. Repeat for multiple tables."),
 ):
     try:
-        config = ctx.obj["config"]
-        if not config:
-            error("Config not found. Run: dbsyncx init")
-            raise typer.Exit(1)
+        config = require_config(ctx)
 
         tables = _validate_tables(table)
 
@@ -123,10 +127,7 @@ def push(
     table: Optional[List[str]] = typer.Option(None, "--table", "-t", help="Limit sync to a table. Repeat for multiple tables."),
 ):
     try:
-        config = ctx.obj["config"]
-        if not config:
-            error("Config not found. Run: dbsyncx init")
-            raise typer.Exit(1)
+        config = require_config(ctx)
 
         tables = _validate_tables(table)
 
@@ -148,10 +149,7 @@ def push(
 @app.command()
 def status(ctx: typer.Context, name: str):
     try:
-        config = ctx.obj["config"]
-        if not config:
-            error("Config not found. Run: dbsyncx init")
-            raise typer.Exit(1)
+        config = require_config(ctx)
 
         url = get_database_url(config, name)
         adapter = get_adapter(url)
@@ -181,10 +179,7 @@ def dump(
     Dump database to file (backup)
     """
     try:
-        config = ctx.obj["config"]
-        if not config:
-            error("Config not found. Run: dbsyncx init")
-            raise typer.Exit(1)
+        config = require_config(ctx)
 
         tables = _validate_tables(table)
         dump_db(config, name, output=output, dry_run=dry_run, schema_only=schema_only, tables=tables)
@@ -208,10 +203,7 @@ def restore(
     Restore database from a dump file.
     """
     try:
-        config = ctx.obj["config"]
-        if not config:
-            error("Config not found. Run: dbsyncx init")
-            raise typer.Exit(1)
+        config = require_config(ctx)
 
         tables = _validate_tables(table)
 
@@ -224,6 +216,134 @@ def restore(
                 raise typer.Exit()
 
         restore_db(config, name, input_file, dry_run=dry_run, schema_only=schema_only, tables=tables)
+
+    except DbSyncXError as e:
+        error(str(e))
+        raise typer.Exit(1)
+
+# Below commands are for backup management lifecycle
+@backup_app.command("list")
+def backup_list(ctx: typer.Context):
+    """
+    List available backups
+    """
+
+    try:
+        config = require_config(ctx)
+        manager = create_backup_manager(config)
+        backups = manager.list_backups()
+
+        if not backups:
+            info("No backups found.")
+            return
+
+        for backup in backups:
+            typer.echo(
+                f"{backup.metadata.id} "
+                f"{backup.filename} "
+                f"{backup.metadata.created_at}"
+            )
+
+    except DbSyncXError as e:
+        error(str(e))
+        raise typer.Exit(1)
+
+@backup_app.command("info")
+def backup_info(
+    ctx: typer.Context,
+    backup_id: str = typer.Argument(..., help="Backup ID"),
+):
+    """
+    Show backup information.
+    """
+    try:
+        config = require_config(ctx)
+        manager = create_backup_manager(config)
+        backup = manager.get_backup(backup_id)
+
+        if backup is None:
+            error(f"Backup '{backup_id}' not found.")
+            raise typer.Exit(1)
+
+        typer.echo(f"ID         : {backup.metadata.id}")
+        typer.echo(f"Database   : {backup.metadata.database}")
+        typer.echo(f"Provider   : {backup.provider}")
+        typer.echo(f"Filename   : {backup.filename}")
+        typer.echo(f"Location   : {backup.location}")
+
+        if backup.path:
+            typer.echo(f"Path       : {backup.path}")
+
+        typer.echo(f'Created At : {backup.metadata.created_at.strftime("%Y-%m-%d %H:%M:%S")}')
+        typer.echo(f"Size       : {format_bytes(backup.metadata.size)}")
+
+        if backup.metadata.duration is not None:
+            typer.echo(f"Duration   : {backup.metadata.duration:.2f}s")
+
+        if backup.metadata.checksum:
+            typer.echo(f"Checksum   : {backup.metadata.checksum}")
+
+        if backup.metadata.db_version:
+            typer.echo(f"DB Version : {backup.metadata.db_version}")
+
+        if backup.metadata.tool_version:
+            typer.echo(f"dbsyncx    : {backup.metadata.tool_version}")
+
+    except DbSyncXError as e:
+        error(str(e))
+        raise typer.Exit(1)
+
+@backup_app.command("delete")
+def backup_delete(
+    ctx: typer.Context,
+    backup_id: str = typer.Argument(..., help="Backup ID"),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation",
+    ),
+):
+    """
+    Delete a backup.
+    """
+    try:
+        config = require_config(ctx)
+        manager = create_backup_manager(config)
+        backup = manager.get_backup(backup_id)
+
+        if backup is None:
+            error(f"Backup '{backup_id}' not found.")
+            raise typer.Exit(1)
+
+        if not force:
+            confirm = typer.confirm(
+                f"Delete backup '{backup.metadata.id}'?"
+            )
+
+            if not confirm:
+                typer.echo("Cancelled")
+                raise typer.Exit()
+
+        manager.delete_backup(backup_id)
+
+        success(f"Deleted backup '{backup_id}'")
+
+    except DbSyncXError as e:
+        error(str(e))
+        raise typer.Exit(1)
+
+@backup_app.command("prune")
+def backup_prune(ctx: typer.Context):
+    """
+    Remove backups according to the configured retention policy.
+    """
+    try:
+        config = require_config(ctx)
+        manager = create_backup_manager(config)
+        manager.prune()
+
+        success("Backup pruning completed.")
 
     except DbSyncXError as e:
         error(str(e))

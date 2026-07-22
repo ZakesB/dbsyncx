@@ -18,6 +18,11 @@ DEFAULT_CONFIG = {
             "url": "postgresql://postgres:postgres@localhost:5432/postgres"
         }
     },
+    "backup": {
+        "provider": "local",
+        "directory": "backups",
+        "catalog": "catalog.json",
+    },
 }
 
 

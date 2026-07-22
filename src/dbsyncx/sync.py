@@ -1,6 +1,12 @@
+import os
 import tempfile
 from pathlib import Path
 from typing import Optional, List
+import uuid
+
+from dbsyncx.backup import create_backup_manager
+from dbsyncx.backup.models import Backup, BaseMetadataModel
+from dbsyncx import __version__
 
 from .config import get_database_url
 from .adapters import get_adapter
@@ -135,6 +141,25 @@ def dump_db(
 
     try:
         adapter.dump(url, output, schema_only=schema_only, tables=tables)
+        manager = create_backup_manager(config)
+        backup = Backup(
+            metadata=BaseMetadataModel(
+                id=str(uuid.uuid4()),
+                database=name,
+                created_at=datetime.now(),
+                size=os.stat(output).st_size,
+                checksum=None,          # TODO: Compute SHA256
+                duration=None,          # TODO: Capture dump duration
+                db_version=None,        # TODO: Populate from adapter
+                tool_version=__version__,
+            ),
+            filename=output,
+            provider=config["backup"]["provider"],
+            location=str(Path(output).parent.resolve()),
+            path=str(output),
+        )
+
+        manager.register_backup(backup=backup)
         success(f"Dump created: {output}")
 
     except Exception as e:

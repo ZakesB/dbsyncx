@@ -13,3 +13,4 @@ build/
 TASKS.md
 workflow.md
 *.dump
+backups/
