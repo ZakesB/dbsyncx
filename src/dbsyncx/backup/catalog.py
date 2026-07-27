@@ -2,6 +2,7 @@ import json
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional
 
 from dbsyncx.backup.models import Backup, BaseMetadataModel
@@ -60,18 +61,35 @@ class BackupCatalog:
         backups = []
 
         for backup in self._backups.values():
-            item = asdict(backup)
-            item["metadata"]["created_at"] = (
-                backup.metadata.created_at.isoformat()
+            backups.append(
+                {
+                    "metadata": {
+                        "id": backup.metadata.id,
+                        "database": backup.metadata.database,
+                        "created_at": backup.metadata.created_at.isoformat(),
+                        "size": backup.metadata.size,
+                        "checksum": backup.metadata.checksum,
+                        "duration": backup.metadata.duration,
+                        "db_version": backup.metadata.db_version,
+                        "tool_version": backup.metadata.tool_version,
+                    },
+                    "filename": str(backup.filename),
+                    "provider": backup.provider,
+                    "location": str(backup.location),
+                    "path": str(backup.path) if backup.path else None,
+                }
             )
 
-            if backup.path:
-                item["path"] = str(backup.path)
-            
-            backups.append(item)
-        
-        with self.catalog_path.open("w", encoding="utf-8") as fp:
-            json.dump(backups, fp, indent=4)
+        with NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=self.catalog_path.parent,
+            delete=False,
+        ) as tmp:
+            json.dump(backups, tmp, indent=4)
+            tmp.flush()
+
+        Path(tmp.name).replace(self.catalog_path)
     
     def add(self, backup: Backup) -> None:
         """
