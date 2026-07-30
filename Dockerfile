@@ -6,7 +6,9 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 # Install PostgreSQL client tools (pg_dump, pg_restore, psql)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends postgresql-client && \
+    apt-get install -y --no-install-recommends \
+        postgresql-client \
+        cron && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
