@@ -9,7 +9,8 @@ from .config import (
 )
 from .sync import pull_db, push_db, dump_db, restore_db
 from .exceptions import DbSyncXError
-from .utils import format_bytes, require_config, success, error, info
+from .utils.format_bytes import format_bytes
+from .utils.cli_chatter import require_config, success, error, info
 from .adapters import get_adapter
 from . import __version__
 
@@ -64,7 +65,7 @@ def main(
             "config": load_config(config_path),
             "config_path": config_path,
         }
-    except Exception:
+    except Exception as e:
         # Allow commands like 'init' to run without config
         ctx.obj = {
             "config": None,

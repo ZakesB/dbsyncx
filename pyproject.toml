@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
     "typer[all]",
     "pyyaml",
+    "python-dotenv>=1.0.1",
 ]
 
 [project.optional-dependencies]
