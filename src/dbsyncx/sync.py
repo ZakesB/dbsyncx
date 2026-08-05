@@ -12,7 +12,7 @@ from .config import get_database_url
 from .adapters import get_adapter
 from .exceptions import DbSyncXError
 from .logging import logger
-from .utils import success
+from .utils.cli_chatter import success
 from datetime import datetime
 
 

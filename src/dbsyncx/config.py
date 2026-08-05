@@ -1,9 +1,11 @@
 import yaml
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from typing import Dict, Any, Optional
 
-from .exceptions import ConfigError
+from .utils.env import interpolate
+from .exceptions import ConfigError, DbSyncXError
 
 
 CONFIG_DIR = Path(".dbsyncx")
@@ -80,12 +82,19 @@ def load_config(config_path: Path) -> Dict[str, Any]:
     """
     if not config_path.exists():
         raise ConfigError(f"Config not found at: {config_path}")
+    
+    # Load environment variables from a .env file if present.
+    load_dotenv()
 
     try:
-        with open(config_path) as f:
-            return yaml.safe_load(f)
-    except yaml.YAMLError:
-        raise ConfigError("Invalid YAML in config file")
+        with config_path.open("r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+        
+        return interpolate(config)
+    except yaml.YAMLError as exc:
+        raise ConfigError("Invalid YAML in config file") from exc
+    except DbSyncXError as exc:
+        raise ConfigError(str(exc)) from exc
 
 
 def get_database_url(config: Dict[str, Any], name: str) -> str:
