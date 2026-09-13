@@ -15,7 +15,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[gdrive]"
 
 # Default configuration location
 ENV DBSYNCX_CONFIG=/config/config.yaml

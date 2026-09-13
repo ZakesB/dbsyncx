@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 from .base import StorageProvider
-from typing import List
-from dbsyncx.backup.models import Backup
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from dbsyncx.backup.models import Backup
 
 
 

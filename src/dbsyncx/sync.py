@@ -153,10 +153,10 @@ def dump_db(
                 db_version=None,        # TODO: Populate from adapter
                 tool_version=__version__,
             ),
-            filename=output,
+            filename=Path(output).name,
             provider=config["backup"]["provider"],
             location=str(Path(output).parent.resolve()),
-            path=str(output),
+            path=Path(output),
         )
 
         manager.register_backup(backup=backup)

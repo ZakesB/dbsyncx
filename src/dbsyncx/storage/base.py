@@ -1,7 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import List
+from __future__ import annotations
 
-from dbsyncx.backup.models import Backup
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict
+
+if TYPE_CHECKING:
+    from dbsyncx.backup.models import Backup
 
 
 
@@ -17,6 +21,11 @@ class StorageProvider(ABC):
         Returns the name of the storage provider.
         """
         raise NotImplementedError
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> "StorageProvider":
+        """Create a provider from the ``backup`` configuration section."""
+        return cls(base_path=Path(config["directory"]))
     
     @abstractmethod
     def upload_backup(self, backup: Backup) -> None:
