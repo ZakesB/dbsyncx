@@ -45,7 +45,7 @@ def create_config():
 def test_version():
     result = runner.invoke(app, ["version"])
     assert result.exit_code == 0
-    assert "1.3.1" in result.output
+    assert "1.3.2" in result.output
 
 def test_init():
     with isolated_filesystem():

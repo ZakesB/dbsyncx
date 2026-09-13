@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.3.1-blue.svg" />
+  <img src="https://img.shields.io/badge/version-1.3.2-blue.svg" />
   <img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" />
   <img src="https://img.shields.io/badge/status-active-blue.svg" />
@@ -122,7 +122,7 @@ pip install -e .
 dbsyncx version
 ```
 ```text
-dbsyncx is at version 1.3.1
+dbsyncx is at version 1.3.2
 ```
 
 ---
@@ -386,7 +386,7 @@ Future:
 * Added support for running `dbsyncx` in local, Docker, and crontab environments.
 * Refactored configuration loading to work seamlessly across all supported execution environments.
 
-### v1.3.1 (Current)
+### v1.3.2 (Current)
 
 * Schema-only sync
 * Table-specific sync
