@@ -1,7 +1,30 @@
+import re
+import os
+from contextlib import contextmanager
+from tempfile import TemporaryDirectory
+
 from typer.testing import CliRunner
 from dbsyncx.main import app
 
 runner = CliRunner()
+
+
+def _compact_help(output: str) -> str:
+    """Remove terminal formatting and wrapping from Rich-rendered CLI help."""
+    plain_output = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", output)
+    return re.sub(r"\s+", "", plain_output)
+
+
+@contextmanager
+def isolated_filesystem():
+    """Use a temporary current directory across supported Typer versions."""
+    original_directory = os.getcwd()
+    with TemporaryDirectory() as directory:
+        os.chdir(directory)
+        try:
+            yield
+        finally:
+            os.chdir(original_directory)
 
 
 def create_config():
@@ -25,13 +48,13 @@ def test_version():
     assert "1.3.1" in result.output
 
 def test_init():
-    with runner.isolated_filesystem():
+    with isolated_filesystem():
         result = runner.invoke(app, ["init"])
         assert result.exit_code == 0
 
 
 def test_push_dry_run():
-    with runner.isolated_filesystem():
+    with isolated_filesystem():
         create_config()
 
         result = runner.invoke(app, ["push", "local", "production", "--dry-run"])
@@ -56,7 +79,7 @@ def test_pull_accepts_schema_only_and_tables(monkeypatch):
 
     monkeypatch.setattr("dbsyncx.main.pull_db", fake_pull)
 
-    with runner.isolated_filesystem():
+    with isolated_filesystem():
         create_config()
 
         result = runner.invoke(
@@ -102,7 +125,7 @@ def test_dump_accepts_schema_only_and_tables(monkeypatch):
 
     monkeypatch.setattr("dbsyncx.main.dump_db", fake_dump)
 
-    with runner.isolated_filesystem():
+    with isolated_filesystem():
         create_config()
 
         result = runner.invoke(
@@ -146,7 +169,7 @@ def test_restore_command(monkeypatch):
 
     monkeypatch.setattr("dbsyncx.main.restore_db", fake_restore)
 
-    with runner.isolated_filesystem():
+    with isolated_filesystem():
         create_config()
 
         result = runner.invoke(
@@ -178,5 +201,6 @@ def test_new_options_are_in_command_help():
     result = runner.invoke(app, ["dump", "--help"])
 
     assert result.exit_code == 0
-    assert "--schema-only" in result.output
-    assert "--table" in result.output
+    help_output = _compact_help(result.output)
+    assert "--schema-only" in help_output
+    assert "--table" in help_output
