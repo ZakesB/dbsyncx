@@ -1,6 +1,7 @@
 from typing import Dict, Type
 
 from dbsyncx.storage.base import StorageProvider
+from dbsyncx.storage.gdrive import GoogleDriveStorageProvider
 from dbsyncx.storage.local import LocalStorageProvider
 
 
@@ -51,3 +52,4 @@ class StorageRegistry:
 
 # Register all providers that you will use here
 StorageRegistry.register_provider(LocalStorageProvider)
+StorageRegistry.register_provider(GoogleDriveStorageProvider)

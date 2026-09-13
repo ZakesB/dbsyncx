@@ -12,9 +12,7 @@ def create_backup_manager(config) -> BackupManager:
         backup_config["provider"]
     )
 
-    provider = _cls(
-        base_path=Path(backup_config["directory"])
-    )
+    provider = _cls.from_config(backup_config)
 
     catalog = BackupCatalog(
         Path(backup_config["directory"]) / backup_config["catalog"]

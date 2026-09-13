@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.1-blue.svg" />
+  <img src="https://img.shields.io/badge/version-1.3.1-blue.svg" />
   <img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" />
   <img src="https://img.shields.io/badge/status-active-blue.svg" />
@@ -54,6 +54,7 @@ Then dbsyncx is for you.
 * Clean YAML configuration
 * Adapter-based architecture
 * Fully local (no cloud required)
+* Optional Google Drive backup storage
 
 ---
 
@@ -121,7 +122,7 @@ pip install -e .
 dbsyncx version
 ```
 ```text
-dbsyncx is at version 1.2.1
+dbsyncx is at version 1.3.1
 ```
 
 ---
@@ -253,6 +254,35 @@ dbsyncx dump production --schema-only
 dbsyncx dump production --table public.users --output users.dump
 ```
 
+### Back up to Google Drive
+
+Install the optional Google Drive dependencies:
+
+```bash
+pip install "dbsyncx[gdrive]"
+```
+
+In Google Cloud, enable the Drive API and create either a Desktop OAuth client
+JSON file or a service-account JSON key. For a service account, share the
+target Drive folder with the service-account email. Then configure the backup
+provider:
+
+```yaml
+backup:
+  provider: gdrive
+  directory: backups              # local backup catalog location
+  catalog: catalog.json
+  credentials_file: ${GOOGLE_APPLICATION_CREDENTIALS}
+  token_file: .dbsyncx/gdrive-token.json   # OAuth only; optional
+  folder_id: 1a2b3cYourDriveFolderId        # optional; recommended
+  # folder_name: dbsyncx-backups            # used when folder_id is omitted
+```
+
+The first OAuth backup opens a browser for Google consent and stores the
+refresh token at `token_file`. Each `dbsyncx dump <database>` still creates a
+local dump, then uploads it to Drive. The local catalog records the Drive file
+ID, so `dbsyncx backup list`, `info`, and `delete` manage the uploaded backup.
+
 ---
 
 ### Restore database
@@ -356,11 +386,12 @@ Future:
 * Added support for running `dbsyncx` in local, Docker, and crontab environments.
 * Refactored configuration loading to work seamlessly across all supported execution environments.
 
-### v1.2.1 (Current)
+### v1.3.1 (Current)
 
 * Schema-only sync
 * Table-specific sync
 * Restore from dump files
+* Google Drive backup storage
 
 ### v1.3.0
 
