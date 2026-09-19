@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.3.2-blue.svg" />
+  <img src="https://img.shields.io/badge/version-1.4.0-blue.svg" />
   <img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" />
   <img src="https://img.shields.io/badge/status-active-blue.svg" />
@@ -122,7 +122,7 @@ pip install -e .
 dbsyncx version
 ```
 ```text
-dbsyncx is at version 1.3.2
+dbsyncx is at version 1.4.0
 ```
 
 ---
@@ -276,12 +276,44 @@ backup:
   token_file: .dbsyncx/gdrive-token.json   # OAuth only; optional
   folder_id: 1a2b3cYourDriveFolderId        # optional; recommended
   # folder_name: dbsyncx-backups            # used when folder_id is omitted
+  # shared_drive_id: 0AExampleSharedDriveId # optional; enables Shared Drive support
 ```
 
 The first OAuth backup opens a browser for Google consent and stores the
 refresh token at `token_file`. Each `dbsyncx dump <database>` still creates a
 local dump, then uploads it to Drive. The local catalog records the Drive file
 ID, so `dbsyncx backup list`, `info`, and `delete` manage the uploaded backup.
+
+To use a Shared Drive, set `shared_drive_id` and, preferably, the ID of its
+target folder in `folder_id`. When `folder_id` is omitted, dbsyncx finds or
+creates `folder_name` in the Shared Drive root. The account behind the OAuth
+credentials or service-account key must be a member of that Shared Drive with
+permission to create and delete files.
+
+### Retain backups automatically
+
+Set a retention policy to remove old backups after each successful dump:
+
+```yaml
+backup:
+  retention:
+    enabled: true
+    keep_last: 7       # always retain the seven newest backups per database
+    max_age_days: 30   # prune older backups after the keep-last protection
+```
+
+Policies apply separately to each database and only to backups owned by the
+currently configured storage provider. With both limits set, dbsyncx keeps the
+newest `keep_last` backups even if they are older than `max_age_days`; an older
+backup is removed only when it exceeds the age limit. To inspect the result
+without deleting anything, run:
+
+```bash
+dbsyncx backup prune --dry-run
+```
+
+`dbsyncx backup prune` lists the selected backups and asks for confirmation;
+use `--force` only for unattended jobs.
 
 ---
 
@@ -386,12 +418,14 @@ Future:
 * Added support for running `dbsyncx` in local, Docker, and crontab environments.
 * Refactored configuration loading to work seamlessly across all supported execution environments.
 
-### v1.3.2 (Current)
+### v1.4.0 (Current)
 
 * Schema-only sync
 * Table-specific sync
 * Restore from dump files
 * Google Drive backup storage
+* Google Shared Drive backup storage
+* Configurable backup retention policies
 
 ### v1.3.0
 

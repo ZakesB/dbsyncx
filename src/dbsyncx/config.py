@@ -24,6 +24,9 @@ DEFAULT_CONFIG = {
         "provider": "local",
         "directory": "backups",
         "catalog": "catalog.json",
+        "retention": {
+            "enabled": False,
+        },
     },
 }
 

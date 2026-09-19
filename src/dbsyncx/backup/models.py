@@ -35,7 +35,7 @@ class RetentionPolicy:
     """
     Represents a retention policy for database backups.
     """
-    enable: bool = True
+    enabled: bool = False
     keep_last: Optional[int] = None
     max_age_days: Optional[int] = None
 

@@ -335,16 +335,49 @@ def backup_delete(
         raise typer.Exit(1)
 
 @backup_app.command("prune")
-def backup_prune(ctx: typer.Context):
+def backup_prune(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show backups that would be removed without deleting them",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation",
+    ),
+):
     """
     Remove backups according to the configured retention policy.
     """
     try:
         config = require_config(ctx)
         manager = create_backup_manager(config)
-        manager.prune()
+        candidates = manager.prune(dry_run=True)
 
-        success("Backup pruning completed.")
+        if not candidates:
+            info("No backups match the retention policy.")
+            return
+
+        for backup in candidates:
+            typer.echo(
+                f"{backup.metadata.id} {backup.filename} "
+                f"{backup.metadata.created_at.isoformat()}"
+            )
+
+        if dry_run:
+            success(f"Dry run: {len(candidates)} backup(s) would be pruned.")
+            return
+
+        if not force and not typer.confirm(f"Prune {len(candidates)} backup(s)?"):
+            typer.echo("Cancelled")
+            return
+
+        pruned = manager.prune()
+
+        success(f"Pruned {len(pruned)} backup(s).")
 
     except DbSyncXError as e:
         error(str(e))

@@ -32,6 +32,7 @@ class GoogleDriveStorageProvider(StorageProvider):
         token_file: Optional[str] = None,
         folder_id: Optional[str] = None,
         folder_name: str = "dbsyncx-backups",
+        shared_drive_id: Optional[str] = None,
         client: Any = None,
         media_upload_factory: Optional[Callable[..., Any]] = None,
     ):
@@ -40,6 +41,7 @@ class GoogleDriveStorageProvider(StorageProvider):
         self.token_file = Path(token_file) if token_file else Path(".dbsyncx/google-drive-token.json")
         self.folder_id = folder_id
         self.folder_name = folder_name
+        self.shared_drive_id = shared_drive_id
         self._client = client
         self._media_upload_factory = media_upload_factory
 
@@ -57,7 +59,17 @@ class GoogleDriveStorageProvider(StorageProvider):
             token_file=config.get("token_file"),
             folder_id=config.get("folder_id"),
             folder_name=config.get("folder_name", "dbsyncx-backups"),
+            shared_drive_id=config.get("shared_drive_id"),
         )
+
+    def _shared_drive_params(self, include_items: bool = False) -> Dict[str, Any]:
+        """Return request parameters required to access Shared Drive files."""
+        params: Dict[str, Any] = {"supportsAllDrives": True}
+        if include_items:
+            params["includeItemsFromAllDrives"] = True
+            if self.shared_drive_id:
+                params.update({"corpora": "drive", "driveId": self.shared_drive_id})
+        return params
 
     def _get_client(self):
         if self._client is not None:
@@ -120,16 +132,28 @@ class GoogleDriveStorageProvider(StorageProvider):
             "and trashed = false"
         )
         response = self._get_client().files().list(
-            q=query, spaces="drive", fields="files(id, name)", pageSize=1
+            q=query,
+            spaces="drive",
+            fields="files(id, name)",
+            pageSize=1,
+            **self._shared_drive_params(include_items=True),
         ).execute()
         files = response.get("files", [])
         if files:
             self.folder_id = files[0]["id"]
             return self.folder_id
 
+        folder_body = {
+            "name": self.folder_name,
+            "mimeType": "application/vnd.google-apps.folder",
+        }
+        if self.shared_drive_id:
+            # A Shared Drive's ID is also the ID of its root folder.
+            folder_body["parents"] = [self.shared_drive_id]
         response = self._get_client().files().create(
-            body={"name": self.folder_name, "mimeType": "application/vnd.google-apps.folder"},
+            body=folder_body,
             fields="id",
+            **self._shared_drive_params(),
         ).execute()
         self.folder_id = response["id"]
         return self.folder_id
@@ -159,6 +183,7 @@ class GoogleDriveStorageProvider(StorageProvider):
                 },
                 media_body=self._media_upload(path),
                 fields="id, webViewLink",
+                **self._shared_drive_params(),
             ).execute()
             backup.location = uploaded["id"]
         except DbSyncXError:
@@ -174,7 +199,9 @@ class GoogleDriveStorageProvider(StorageProvider):
         try:
             from googleapiclient.http import MediaIoBaseDownload
 
-            request = self._get_client().files().get_media(fileId=backup.location)
+            request = self._get_client().files().get_media(
+                fileId=backup.location, **self._shared_drive_params()
+            )
             with destination.open("wb") as output:
                 downloader = MediaIoBaseDownload(output, request)
                 done = False
@@ -192,7 +219,9 @@ class GoogleDriveStorageProvider(StorageProvider):
         if not backup.location:
             return False
         try:
-            self._get_client().files().get(fileId=backup.location, fields="id").execute()
+            self._get_client().files().get(
+                fileId=backup.location, fields="id", **self._shared_drive_params()
+            ).execute()
             return True
         except Exception:
             return False
@@ -201,6 +230,8 @@ class GoogleDriveStorageProvider(StorageProvider):
         if not backup.location:
             return
         try:
-            self._get_client().files().delete(fileId=backup.location).execute()
+            self._get_client().files().delete(
+                fileId=backup.location, **self._shared_drive_params()
+            ).execute()
         except Exception as exc:
             raise DbSyncXError(f"Google Drive deletion failed: {exc}") from exc
